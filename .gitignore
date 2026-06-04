@@ -1,10 +1,62 @@
-.DS_Store
-Thumbs.db
-desktop.ini
+# ==========================================
+# Java / Spring Boot
+# ==========================================
 
-.vscode/
-.idea/
-*.swp
+# Arquivos de Build do Maven
+**/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.next
+pom.xml.war
+pom.xml.ear
+pom.xml.bundle
+command.lnk
+
+# Logs do Spring Boot e da aplicação
+*.log
+**/logs/
+
+# Arquivos de empacotamento
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# ==========================================
+# IDEs e Editores de Código
+# ==========================================
+
+# IntelliJ IDEA
+**/.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Visual Studio Code
+**/.vscode/
+
+# ==========================================
+# Sistema Operacional
+# ==========================================
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ==========================================
+# Configurações Locais e Segredos
+# ==========================================
 
 .env
-*.log
