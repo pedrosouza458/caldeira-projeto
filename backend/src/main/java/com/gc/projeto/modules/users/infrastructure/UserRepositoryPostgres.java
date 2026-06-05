@@ -48,6 +48,12 @@ public class UserRepositoryPostgres implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByEmail(String email) {
+       return jpaRepository.findByEmail(email)
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public boolean existsById(UUID id) {
         return jpaRepository.existsById(id);
     }
@@ -55,6 +61,11 @@ public class UserRepositoryPostgres implements UserRepository {
     @Override
     public boolean existsByUsername(String username) {
         return jpaRepository.existsByUsername(username);
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return jpaRepository.existsByEmail(email);
     }
 
     @Override
