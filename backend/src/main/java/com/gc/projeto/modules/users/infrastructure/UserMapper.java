@@ -1,7 +1,10 @@
 package com.gc.projeto.modules.users.infrastructure;
 
+import org.springframework.stereotype.Component;
+
 import com.gc.projeto.modules.users.domain.User;
 
+@Component
 public class UserMapper {
     private UserMapper() {};
 
@@ -14,6 +17,7 @@ public class UserMapper {
                 .id(domain.getId())
                 .name(domain.getName())
                 .username(domain.getUsername())
+                .email(domain.getEmail())
                 .profilePictureUrl(domain.getProfilePictureUrl())
                 .companyId(domain.getCompanyId())
                 .lastUrgentNeed(domain.getLastUrgentNeed())
@@ -35,6 +39,7 @@ public class UserMapper {
                 .id(entity.getId())
                 .name(entity.getName())
                 .username(entity.getUsername())
+                .email(entity.getEmail())
                 .profilePictureUrl(entity.getProfilePictureUrl())
                 .companyId(entity.getCompanyId())
                 .lastUrgentNeed(entity.getLastUrgentNeed())

@@ -6,14 +6,14 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import com.gc.projeto.modules.users.domain.User;
 import com.gc.projeto.modules.users.domain.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
-@Component
+@Repository
 @RequiredArgsConstructor
 public class UserRepositoryPostgres implements UserRepository {
 
