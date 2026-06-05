@@ -1,4 +1,4 @@
-package com.gc.projeto.user;
+package com.gc.projeto.modules.users.infrastructure;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,7 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class UserEntity {
 
     /**
      * ID managed externally by Supabase Auth (auth.users).
