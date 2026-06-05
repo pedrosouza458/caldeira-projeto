@@ -1,6 +1,5 @@
 package com.gc.projeto.user;
 
-import com.gc.projeto.company.Company;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,18 +26,26 @@ public class User {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "profile_picture")
-    private String profilePicture;
+    @Column(name = "username", nullable = false, unique = true)
+    private String username;
 
-    @Column(name = "is_alumni", nullable = false)
-    private boolean isAlumni;
+    @Column(name = "profile_picture_url")
+    private String profilePictureUrl;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id")
-    private Company company;
+    @Column(name = "company_id")
+    private UUID companyId;
 
-    @Column(name = "last_urgent_request_at", nullable = false)
-    private Instant lastUrgentRequestAt;
+    @Column(name = "last_urgent_need")
+    private Instant lastUrgentNeed;
+
+    @Column(name = "work_zone_id")
+    private UUID workZoneId;
+
+    @Column(name = "actual_zone_id")
+    private UUID actualZoneId;
+
+    @Column(name = "featured_program_id")
+    private UUID featuredProgramId;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
