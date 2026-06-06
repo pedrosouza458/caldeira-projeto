@@ -21,7 +21,8 @@ public class SecurityConfig {
                     "/swagger-ui/**", 
                     "/swagger-ui.html", 
                     "/actuator/**",
-                    "/users/**"
+                    "/users/**",
+                        "/companies/**","/"
                 ).permitAll()
                 
                 // Tranca o resto da API
