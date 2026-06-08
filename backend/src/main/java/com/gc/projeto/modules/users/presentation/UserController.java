@@ -1,16 +1,27 @@
 package com.gc.projeto.modules.users.presentation;
 
 import java.util.Map;
+import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.gc.projeto.modules.users.application.usecases.CreateUserUseCase;
+import com.gc.projeto.modules.users.application.usecases.GetUserByIdUseCase;
+import com.gc.projeto.modules.users.application.usecases.ListUsersUseCase;
+import com.gc.projeto.modules.users.domain.User;
+import com.gc.projeto.modules.users.presentation.dtos.UserFilterRequestDTO;
 import com.gc.projeto.modules.users.presentation.dtos.UserRequestDTO;
+import com.gc.projeto.modules.users.presentation.dtos.UserResponseDTO;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,13 +30,31 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
-    
+
     private final CreateUserUseCase createUserUseCase;
+    private final GetUserByIdUseCase getUserByIdUseCase;
+    private final ListUsersUseCase listUsersUseCase;
 
     @PostMapping()
-    public ResponseEntity<Map<String, String>> createUser(@Valid @RequestBody UserRequestDTO request){
+    public ResponseEntity<Map<String, String>> createUser(@Valid @RequestBody UserRequestDTO request) {
         createUserUseCase.execute(request.toInput());
         Map<String, String> response = Map.of("message", "User created successfully");
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, UserResponseDTO>> getUserById(@PathVariable UUID id) {
+        User user = getUserByIdUseCase.execute(id);
+        Map<String, UserResponseDTO> response = Map.of("user", new UserResponseDTO(user));
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping()
+    public ResponseEntity<Page<UserResponseDTO>> listUsers(
+            UserFilterRequestDTO filters,
+            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+        var usersPage = listUsersUseCase.execute(filters.toInput(), pageable);
+        Page<UserResponseDTO> response = usersPage.map(UserResponseDTO::new);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

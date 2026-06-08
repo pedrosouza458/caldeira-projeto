@@ -6,7 +6,6 @@ import com.gc.projeto.modules.users.domain.User;
 
 @Component
 public class UserMapper {
-    private UserMapper() {};
 
     public UserEntity toEntity(User domain) {
         if (domain == null) {
