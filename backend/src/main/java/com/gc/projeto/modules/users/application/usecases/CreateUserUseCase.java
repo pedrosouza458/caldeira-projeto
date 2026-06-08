@@ -18,7 +18,7 @@ public class CreateUserUseCase {
 
     @Transactional
     public User execute(CreateUserInput input) {
-        if (userRepository.findByEmail(input.email()).isPresent()) {
+        if (userRepository.existsByEmail(input.email())) {
             throw new EmailAlreadyExistsException();
         }
         
