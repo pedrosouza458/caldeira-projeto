@@ -8,6 +8,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class CreateCompanyUseCase {
@@ -21,14 +23,13 @@ public class CreateCompanyUseCase {
         }
 
         var company = Company.builder()
-                .id(input.id())
+                .id(UUID.randomUUID())
                 .name(input.name())
                 .logo(input.logo())
                 .isResident(input.isResident())
                 .build();
 
-        var savedCompany = companyRepository.save(company);
-
-        return savedCompany;
+        return companyRepository.save(company);
     }
 }
+
