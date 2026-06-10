@@ -31,10 +31,7 @@ public class UserRepositoryPostgres implements UserRepository {
 
     @Override
     public void delete(UUID id) {
-        jpaRepository.findById(id).ifPresent(entity -> {
-            entity.setDeletedAt(Instant.now());
-            jpaRepository.save(entity);
-        });
+        jpaRepository.deleteById(id);
     }
 
     @Override
@@ -58,7 +55,7 @@ public class UserRepositoryPostgres implements UserRepository {
         return jpaRepository.findAllByFilters(
             filter.username(),
             filter.companyId(),
-            filter.workZoneId(),
+            filter.featuredProgramId(),
             pageable
         ).map(mapper::toDomain);
     }
