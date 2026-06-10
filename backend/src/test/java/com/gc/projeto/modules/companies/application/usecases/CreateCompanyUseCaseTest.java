@@ -55,12 +55,12 @@ class CreateCompanyUseCaseTest {
 
         log.info("[RESULT] id='{}', name='{}', logo='{}', isResident={}, createdAt={}, updatedAt={}",
                 result.getId(), result.getName(), result.getLogo(),
-                result.isResident(), result.getCreatedAt(), result.getUpdatedAt());
+                result.getIsResident(), result.getCreatedAt(), result.getUpdatedAt());
 
         assertThat(result).isNotNull();
         assertThat(result.getName()).isEqualTo(input.name());
         assertThat(result.getLogo()).isEqualTo(input.logo());
-        assertThat(result.isResident()).isEqualTo(input.isResident());
+        assertThat(result.getIsResident()).isEqualTo(input.isResident());
         assertThat(result.getId()).isNotNull();
     }
 
@@ -111,11 +111,11 @@ class CreateCompanyUseCaseTest {
 
         var persisted = captor.getValue();
         log.info("[RESULT] dados persistidos -> name='{}', logo='{}', isResident={}",
-                persisted.getName(), persisted.getLogo(), persisted.isResident());
+                persisted.getName(), persisted.getLogo(), persisted.getIsResident());
 
         assertThat(persisted.getName()).isEqualTo("Empresa XYZ");
         assertThat(persisted.getLogo()).isEqualTo("https://logo-xyz.png");
-        assertThat(persisted.isResident()).isFalse();
+        assertThat(persisted.getIsResident()).isFalse();
     }
 
     // ─── nome duplicado ───────────────────────────────────────────────────────

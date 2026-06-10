@@ -1,22 +1,25 @@
 package com.gc.projeto.modules.companies.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Company {
+
+    @EqualsAndHashCode.Include
     private UUID id;
+
     private String name;
     private String logo;
-    private boolean isResident;
+    private Boolean isResident;
     private Instant createdAt;
     private Instant updatedAt;
+    private Long version;
 }

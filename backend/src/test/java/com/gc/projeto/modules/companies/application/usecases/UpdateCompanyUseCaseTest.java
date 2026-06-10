@@ -46,6 +46,7 @@ class UpdateCompanyUseCaseTest {
                 .isResident(true)
                 .createdAt(Instant.now().minusSeconds(3600))
                 .updatedAt(Instant.now().minusSeconds(3600))
+                .version(1L)
                 .build();
 
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(existingCompany));
@@ -55,14 +56,16 @@ class UpdateCompanyUseCaseTest {
         var result = updateCompanyUseCase.execute(input);
 
         log.info("[RESULT] atualizado -> id='{}', name='{}', logo='{}', isResident={}",
-                result.getId(), result.getName(), result.getLogo(), result.isResident());
+                result.getId(), result.getName(), result.getLogo(), result.getIsResident());
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(companyId);
         assertThat(result.getName()).isEqualTo(input.name());
         assertThat(result.getLogo()).isEqualTo(input.logo());
-        assertThat(result.isResident()).isEqualTo(input.isResident());
-        assertThat(result.getCreatedAt()).isEqualTo(existingCompany.getCreatedAt()); // Deve manter o createdAt original
+        assertThat(result.getIsResident()).isEqualTo(input.isResident());
+        assertThat(result.getCreatedAt()).isEqualTo(existingCompany.getCreatedAt());
+
+        assertThat(result.getVersion()).isEqualTo(existingCompany.getVersion());
     }
 
     @Test
@@ -80,7 +83,6 @@ class UpdateCompanyUseCaseTest {
                 .build();
 
         when(companyRepository.findById(companyId)).thenReturn(Optional.of(existingCompany));
-        // Simula que a busca por nome retorna ela mesma
         when(companyRepository.findByName(input.name())).thenReturn(Optional.of(existingCompany));
         when(companyRepository.save(any(Company.class))).thenAnswer(i -> i.getArgument(0));
 

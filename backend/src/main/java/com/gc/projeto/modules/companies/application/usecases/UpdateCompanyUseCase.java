@@ -5,9 +5,9 @@ import com.gc.projeto.modules.companies.domain.Company;
 import com.gc.projeto.modules.companies.domain.CompanyRepository;
 import com.gc.projeto.modules.companies.domain.exceptions.CompanyNameAlreadyExistsException;
 import com.gc.projeto.modules.companies.domain.exceptions.CompanyNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +31,7 @@ public class UpdateCompanyUseCase {
                 .isResident(input.isResident())
                 .createdAt(existing.getCreatedAt())
                 .updatedAt(existing.getUpdatedAt())
+                .version(existing.getVersion())
                 .build();
 
         return companyRepository.save(updated);

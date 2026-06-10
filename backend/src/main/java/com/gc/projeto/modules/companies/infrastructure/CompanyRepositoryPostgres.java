@@ -5,6 +5,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import com.gc.projeto.modules.companies.domain.Company;
@@ -28,9 +30,7 @@ public class CompanyRepositoryPostgres implements CompanyRepository {
 
     @Override
     public void delete(UUID id) {
-        if (jpaRepository.existsById(id)) {
-            jpaRepository.deleteById(id);
-        }
+        jpaRepository.deleteById(id);
     }
 
     @Override
@@ -41,7 +41,7 @@ public class CompanyRepositoryPostgres implements CompanyRepository {
 
     @Override
     public Optional<Company> findByName(String name) {
-        return jpaRepository.findByName(name)
+        return jpaRepository.findByNameIgnoreCase(name)
                 .map(mapper::toDomain);
     }
 
@@ -53,10 +53,15 @@ public class CompanyRepositoryPostgres implements CompanyRepository {
     }
 
     @Override
-    public List<Company> findByIsResident(boolean isResident) {
-        return jpaRepository.findByIsResident(isResident).stream()
-                .map(mapper::toDomain)
-                .collect(Collectors.toList());
+    public Page<Company> findAll(Pageable pageable) {
+        return jpaRepository.findAll(pageable)
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    public Page<Company> findByIsResident(boolean isResident, Pageable pageable) {
+        return jpaRepository.findByIsResident(isResident, pageable)
+                .map(mapper::toDomain);
     }
 
     @Override
@@ -66,6 +71,6 @@ public class CompanyRepositoryPostgres implements CompanyRepository {
 
     @Override
     public boolean existsByName(String name) {
-        return jpaRepository.existsByName(name);
+        return jpaRepository.existsByNameIgnoreCase(name);
     }
 }

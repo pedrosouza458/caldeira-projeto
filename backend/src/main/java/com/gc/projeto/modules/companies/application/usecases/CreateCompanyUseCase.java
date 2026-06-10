@@ -1,12 +1,12 @@
 package com.gc.projeto.modules.companies.application.usecases;
 
-import com.gc.projeto.modules.companies.application.dtos.CreateCompanyInput;
 import com.gc.projeto.modules.companies.domain.Company;
-import com.gc.projeto.modules.companies.domain.exceptions.CompanyNameAlreadyExistsException;
 import com.gc.projeto.modules.companies.domain.CompanyRepository;
-import jakarta.transaction.Transactional;
+import com.gc.projeto.modules.companies.domain.exceptions.CompanyNameAlreadyExistsException;
+import com.gc.projeto.modules.companies.application.dtos.CreateCompanyInput;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -32,4 +32,3 @@ public class CreateCompanyUseCase {
         return companyRepository.save(company);
     }
 }
-

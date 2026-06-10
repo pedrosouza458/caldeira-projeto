@@ -2,6 +2,7 @@ package com.gc.projeto.modules.companies.infrastructure;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -13,7 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CompanyEntity {
+public class CompanyEntity implements Persistable<UUID> {
 
     @Id
     @Column(name = "id", updatable = false, nullable = false)
@@ -26,7 +27,7 @@ public class CompanyEntity {
     private String logo;
 
     @Column(name = "is_resident", nullable = false)
-    private boolean isResident;
+    private Boolean isResident;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -34,14 +35,33 @@ public class CompanyEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
+
+    @Override
+    public boolean isNew() {
+        return this.isNew;
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = Instant.now();
         updatedAt = Instant.now();
+        this.isNew = false;
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = Instant.now();
+    }
+
+    @PostLoad
+    protected void markNotNew() {
+        this.isNew = false;
     }
 }

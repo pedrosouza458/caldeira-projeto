@@ -4,7 +4,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
 
-@Schema(description = "Estrutura padrão para retornos de erro da aplicação")
+@Schema(
+        description = "Estrutura padrão para retornos de erro da aplicação",
+        example = """
+        {
+          "status": 400,
+          "message": "Dados de entrada inválidos.",
+          "timestamp": "2026-06-09T23:56:15Z",
+          "errors": [
+            "O nome da empresa é obrigatório.",
+            "A URL do logo é inválida."
+          ]
+        }
+        """
+)
 public record ErrorResponseDTO(
         @Schema(description = "Código do status HTTP do erro", example = "400")
         int status,

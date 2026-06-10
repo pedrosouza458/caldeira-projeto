@@ -15,9 +15,11 @@ public class CompanyMapper {
                 .id(domain.getId())
                 .name(domain.getName())
                 .logo(domain.getLogo())
-                .isResident(domain.isResident())
+                .isResident(domain.getIsResident())
                 .createdAt(domain.getCreatedAt())
                 .updatedAt(domain.getUpdatedAt())
+                .version(domain.getVersion())
+                .isNew(domain.getCreatedAt() == null)
                 .build();
     }
 
@@ -30,9 +32,10 @@ public class CompanyMapper {
                 .id(entity.getId())
                 .name(entity.getName())
                 .logo(entity.getLogo())
-                .isResident(entity.isResident())
+                .isResident(entity.getIsResident())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .version(entity.getVersion())
                 .build();
     }
 }

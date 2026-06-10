@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -21,6 +23,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -93,9 +96,7 @@ class CompanyControllerTest {
                 .andExpect(jsonPath("$.updatedAt").isNotEmpty())
                 .andReturn();
 
-        log.info("[RESULT] status={}, body={}",
-                result.getResponse().getStatus(),
-                result.getResponse().getContentAsString());
+        log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
     }
 
     @Test
@@ -124,10 +125,10 @@ class CompanyControllerTest {
         log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
     }
 
-    // ─── GET /companies (Listar Empresas) ─────────────────────────────────────
+    // ─── GET /companies (Listar Empresas Paginadas) ───────────────────────────
 
     @Test
-    @DisplayName("GET /companies → 200 com lista de empresas")
+    @DisplayName("GET /companies → 200 com lista paginada de empresas")
     void listCompanies_shouldReturn200_withCompaniesList() throws Exception {
         var company = Company.builder()
                 .id(UUID.randomUUID())
@@ -138,15 +139,41 @@ class CompanyControllerTest {
                 .updatedAt(Instant.now())
                 .build();
 
-        when(listCompaniesUseCase.execute(any())).thenReturn(List.of(company));
+        // Ajustado para o novo contrato de paginação (Ponto 13)
+        when(listCompaniesUseCase.execute(any(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(company)));
 
         log.info("[ARRANGE] GET /companies (sem filtros)");
 
         var result = mockMvc.perform(get("/companies"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].name").value("Empresa Listada"))
-                .andExpect(jsonPath("$[0].isResident").value(true))
+                .andExpect(jsonPath("$.content").isArray()) // Resposta envelopada pelo Page do Spring
+                .andExpect(jsonPath("$.content[0].name").value("Empresa Listada"))
+                .andExpect(jsonPath("$.content[0].isResident").value(true))
+                .andReturn();
+
+        log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
+    }
+
+    @Test
+    @DisplayName("GET /companies?isResident=true → 200 filtrando por empresas residentes (Adicionado)")
+    void listCompanies_shouldReturn200_withFilteredCompaniesList() throws Exception {
+        var company = Company.builder()
+                .id(UUID.randomUUID())
+                .name("Empresa Residente")
+                .logo("https://logo.png")
+                .isResident(true)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+
+        when(listCompaniesUseCase.execute(eq(true), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(company)));
+
+        log.info("[ARRANGE] GET /companies?isResident=true");
+
+        var result = mockMvc.perform(get("/companies").param("isResident", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].name").value("Empresa Residente"))
+                .andExpect(jsonPath("$.content[0].isResident").value(true))
                 .andReturn();
 
         log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
@@ -259,11 +286,37 @@ class CompanyControllerTest {
         log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
     }
 
+    @Test
+    @DisplayName("PUT /companies/{id} → 409 quando nome atualizado já está em uso (Adicionado)")
+    void updateCompany_shouldReturn409_whenNameAlreadyExists() throws Exception {
+        var id = UUID.randomUUID();
+        var body = """
+                {
+                    "name": "Nome Duplicado",
+                    "logo": "https://logo.png",
+                    "isResident": true
+                }
+                """;
+
+        when(updateCompanyUseCase.execute(any())).thenThrow(new CompanyNameAlreadyExistsException());
+
+        log.info("[ARRANGE] PUT /companies/{} -> Nome Duplicado", id);
+
+        var result = mockMvc.perform(put("/companies/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andReturn();
+
+        log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
+    }
+
     // ─── DELETE /companies/{id} (Deletar Empresa) ────────────────────────────
 
     @Test
     @DisplayName("DELETE /companies/{id} → 204 No Content quando deletado com sucesso")
-    void deleteCompany_shouldReturn24_whenIdExists() throws Exception {
+    void deleteCompany_shouldReturn204_whenIdExists() throws Exception {
         var id = UUID.randomUUID();
         doNothing().when(deleteCompanyUseCase).execute(eq(id));
 
@@ -304,14 +357,100 @@ class CompanyControllerTest {
                 }
                 """;
 
-        log.info("[ARRANGE] POST /companies -> name='' (campo obrigatório em branco)");
+        log.info("[ARRANGE] POST /companies -> name=''");
 
         var result = mockMvc.perform(post("/companies")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.errors[?(@=~ /.*name.*/)]").exists())
+                // Corrigido: Asserção rígida baseada no formato mapeado pelo GlobalExceptionHandler (Ponto 7)
+                .andExpect(jsonPath("$.errors", hasItem("name: O nome da empresa é obrigatório.")))
+                .andReturn();
+
+        log.info("[RESULT] status={}, errors={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
+    }
+
+    @Test
+    @DisplayName("POST /companies → 400 quando o logo está em branco (Adicionado)")
+    void createCompany_shouldReturn400_whenLogoIsBlank() throws Exception {
+        var body = """
+                {
+                    "name": "Empresa Valida",
+                    "logo": "",
+                    "isResident": true
+                }
+                """;
+
+        var result = mockMvc.perform(post("/companies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors", hasItem("logo: A URL do logo é obrigatória.")))
+                .andReturn();
+
+        log.info("[RESULT] status={}, errors={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
+    }
+
+    @Test
+    @DisplayName("POST /companies → 400 quando a URL do logo é inválida (Adicionado)")
+    void createCompany_shouldReturn400_whenLogoIsInvalidURL() throws Exception {
+        var body = """
+                {
+                    "name": "Empresa Valida",
+                    "logo": "link-invalido-qualquer",
+                    "isResident": true
+                }
+                """;
+
+        var result = mockMvc.perform(post("/companies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors", hasItem("logo: A URL do logo informada é inválida.")))
+                .andReturn();
+
+        log.info("[RESULT] status={}, errors={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
+    }
+
+    @Test
+    @DisplayName("POST /companies → 400 quando isResident é nulo (Adicionado)")
+    void createCompany_shouldReturn400_whenIsResidentIsNull() throws Exception {
+        var body = """
+                {
+                    "name": "Empresa Valida",
+                    "logo": "https://logo.png",
+                    "isResident": null
+                }
+                """;
+
+        var result = mockMvc.perform(post("/companies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors", hasItem("isResident: O campo isResident é obrigatório.")))
+                .andReturn();
+
+        log.info("[RESULT] status={}, errors={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
+    }
+
+    @Test
+    @DisplayName("PUT /companies/{id} → 400 quando campos enviados estão em branco (Adicionado)")
+    void updateCompany_shouldReturn400_whenFieldsAreBlank() throws Exception {
+        var id = UUID.randomUUID();
+        var body = """
+                {
+                    "name": "",
+                    "logo": "https://logo.png",
+                    "isResident": true
+                }
+                """;
+
+        var result = mockMvc.perform(put("/companies/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors", hasItem("name: O nome da empresa é obrigatório.")))
                 .andReturn();
 
         log.info("[RESULT] status={}, errors={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());

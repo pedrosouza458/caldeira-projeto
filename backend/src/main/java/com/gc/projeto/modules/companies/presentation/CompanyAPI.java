@@ -6,7 +6,6 @@ import com.gc.projeto.modules.companies.presentation.dtos.CompanyUpdateRequestDT
 import com.gc.projeto.shared.presentation.dtos.ErrorResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,10 +13,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "Companies", description = "Operações relacionadas ao gerenciamento de empresas")
@@ -42,9 +42,9 @@ public interface CompanyAPI {
                             examples = @ExampleObject(value = """
                                     {
                                       "status": 400,
-                                      "message": "Dados de entrada inválidos.",
+                                      "message": "Requisição inválida. Corrija os campos informados.",
                                       "timestamp": "2026-06-10T00:00:00Z",
-                                      "errors": ["O nome da empresa é obrigatório.", "A URL do logo é obrigatória."]
+                                      "errors": ["name: O nome da empresa é obrigatório.", "logo: A URL do logo informada é inválida."]
                                     }
                                     """))),
             @ApiResponse(responseCode = "409", description = "Nome da empresa já está em uso",
@@ -53,7 +53,7 @@ public interface CompanyAPI {
                             examples = @ExampleObject(value = """
                                     {
                                       "status": 409,
-                                      "message": "O nome da empresa já está em uso.",
+                                      "message": "O nome da empresa informada já está sendo usado.",
                                       "timestamp": "2026-06-10T00:00:00Z",
                                       "errors": null
                                     }
@@ -66,22 +66,20 @@ public interface CompanyAPI {
 
     @Operation(
             summary = "Listar empresas",
-            description = "Retorna todas as empresas cadastradas. Aceita filtro opcional pelo status de residente."
+            description = "Retorna as empresas cadastradas de forma paginada. Aceita filtro opcional pelo status de residente."
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "Lista retornada com sucesso",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = CompanyResponseDTO.class))
-                    )
+                    description = "Lista paginada retornada com sucesso"
             )
     })
     @GetMapping
-    ResponseEntity<List<CompanyResponseDTO>> listCompanies(
+    ResponseEntity<Page<CompanyResponseDTO>> listCompanies(
             @Parameter(description = "Filtra por empresas residentes (true) ou não residentes (false). Omitir para listar todas.")
-            @RequestParam(required = false) Boolean isResident
+            @RequestParam(required = false) Boolean isResident,
+            @Parameter(description = "Parâmetros de paginação (page, size, sort)")
+            Pageable pageable
     );
 
     @Operation(
@@ -103,7 +101,7 @@ public interface CompanyAPI {
                             examples = @ExampleObject(value = """
                                     {
                                       "status": 404,
-                                      "message": "Empresa não encontrada com o ID informado.",
+                                      "message": "Empresa não encontrada.",
                                       "timestamp": "2026-06-10T00:00:00Z",
                                       "errors": null
                                     }
@@ -138,9 +136,9 @@ public interface CompanyAPI {
                             examples = @ExampleObject(value = """
                                     {
                                       "status": 400,
-                                      "message": "Dados de entrada inválidos.",
+                                      "message": "Requisição inválida. Corrija os campos informados.",
                                       "timestamp": "2026-06-10T00:00:00Z",
-                                      "errors": ["O nome pode ter no máximo 255 caracteres."]
+                                      "errors": ["name: O nome pode ter no máximo 255 caracteres."]
                                     }
                                     """))),
             @ApiResponse(responseCode = "404", description = "Empresa não encontrada",
@@ -149,7 +147,7 @@ public interface CompanyAPI {
                             examples = @ExampleObject(value = """
                                     {
                                       "status": 404,
-                                      "message": "Empresa não encontrada com o ID informado.",
+                                      "message": "Empresa não encontrada.",
                                       "timestamp": "2026-06-10T00:00:00Z",
                                       "errors": null
                                     }
@@ -160,7 +158,7 @@ public interface CompanyAPI {
                             examples = @ExampleObject(value = """
                                     {
                                       "status": 409,
-                                      "message": "O nome da empresa já está em uso.",
+                                      "message": "O nome da empresa informada já está sendo usado.",
                                       "timestamp": "2026-06-10T00:00:00Z",
                                       "errors": null
                                     }
@@ -189,7 +187,7 @@ public interface CompanyAPI {
                             examples = @ExampleObject(value = """
                                     {
                                       "status": 404,
-                                      "message": "Empresa não encontrada com o ID informado.",
+                                      "message": "Empresa não encontrada.",
                                       "timestamp": "2026-06-10T00:00:00Z",
                                       "errors": null
                                     }

@@ -1,22 +1,18 @@
 package com.gc.projeto.modules.companies.presentation;
 
-import com.gc.projeto.modules.companies.application.usecases.CreateCompanyUseCase;
-import com.gc.projeto.modules.companies.application.usecases.UpdateCompanyUseCase;
-import com.gc.projeto.modules.companies.application.usecases.ListCompaniesUseCase;
-import com.gc.projeto.modules.companies.application.usecases.GetCompanyByIdUseCase;
-import com.gc.projeto.modules.companies.application.usecases.DeleteCompanyUseCase;
+import com.gc.projeto.modules.companies.application.usecases.*;
 import com.gc.projeto.modules.companies.presentation.dtos.CompanyRequestDTO;
 import com.gc.projeto.modules.companies.presentation.dtos.CompanyResponseDTO;
 import com.gc.projeto.modules.companies.presentation.dtos.CompanyUpdateRequestDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/companies")
@@ -30,20 +26,17 @@ public class CompanyController implements CompanyAPI {
     private final DeleteCompanyUseCase deleteCompanyUseCase;
 
     @Override
-    public ResponseEntity<CompanyResponseDTO> createCompany(@Valid @RequestBody CompanyRequestDTO request) {
+    public ResponseEntity<CompanyResponseDTO> createCompany(
+            @Valid @RequestBody CompanyRequestDTO request) {
         var company = createCompanyUseCase.execute(request.toInput());
         return ResponseEntity.status(HttpStatus.CREATED).body(new CompanyResponseDTO(company));
     }
 
     @Override
-    public ResponseEntity<List<CompanyResponseDTO>> listCompanies(@RequestParam(required = false) Boolean isResident) {
-        var companies = listCompaniesUseCase.execute(isResident);
-
-        return ResponseEntity.ok(
-                companies.stream()
-                        .map(CompanyResponseDTO::new)
-                        .collect(Collectors.toList())
-        );
+    public ResponseEntity<Page<CompanyResponseDTO>> listCompanies(Boolean isResident, Pageable pageable) {
+        var companies = listCompaniesUseCase.execute(isResident, pageable);
+        Page<CompanyResponseDTO> responsePage = companies.map(CompanyResponseDTO::new);
+        return ResponseEntity.ok(responsePage);
     }
 
     @Override
@@ -53,7 +46,9 @@ public class CompanyController implements CompanyAPI {
     }
 
     @Override
-    public ResponseEntity<CompanyResponseDTO> updateCompany(@PathVariable UUID id, @Valid @RequestBody CompanyUpdateRequestDTO request) {
+    public ResponseEntity<CompanyResponseDTO> updateCompany(
+            @PathVariable UUID id,
+            @Valid @RequestBody CompanyUpdateRequestDTO request) {
         var company = updateCompanyUseCase.execute(request.toInput(id));
         return ResponseEntity.ok(new CompanyResponseDTO(company));
     }
