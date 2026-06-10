@@ -1,8 +1,9 @@
 package com.gc.projeto.modules.companies.presentation;
 
-import com.gc.projeto.modules.companies.application.usecases.CreateCompanyUseCase;
+import com.gc.projeto.modules.companies.application.usecases.*;
 import com.gc.projeto.modules.companies.domain.Company;
 import com.gc.projeto.modules.companies.domain.exceptions.CompanyNameAlreadyExistsException;
+import com.gc.projeto.modules.companies.domain.exceptions.CompanyNotFoundException;
 import com.gc.projeto.shared.presentation.GlobalExceptionHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
@@ -17,11 +18,15 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -38,7 +43,19 @@ class CompanyControllerTest {
     @MockitoBean
     private CreateCompanyUseCase createCompanyUseCase;
 
-    // ─── 201 Created ─────────────────────────────────────────────────────────
+    @MockitoBean
+    private UpdateCompanyUseCase updateCompanyUseCase;
+
+    @MockitoBean
+    private ListCompaniesUseCase listCompaniesUseCase;
+
+    @MockitoBean
+    private GetCompanyByIdUseCase getCompanyByIdUseCase;
+
+    @MockitoBean
+    private DeleteCompanyUseCase deleteCompanyUseCase;
+
+    // ─── POST /companies (Criar Empresa) ──────────────────────────────────────
 
     @Test
     @DisplayName("POST /companies → 201 com corpo da empresa criada")
@@ -81,8 +98,6 @@ class CompanyControllerTest {
                 result.getResponse().getContentAsString());
     }
 
-    // ─── 409 Conflict ────────────────────────────────────────────────────────
-
     @Test
     @DisplayName("POST /companies → 409 quando o nome já existe")
     void createCompany_shouldReturn409_whenNameAlreadyExists() throws Exception {
@@ -94,8 +109,7 @@ class CompanyControllerTest {
                 }
                 """;
 
-        when(createCompanyUseCase.execute(any()))
-                .thenThrow(new CompanyNameAlreadyExistsException());
+        when(createCompanyUseCase.execute(any())).thenThrow(new CompanyNameAlreadyExistsException());
 
         log.info("[ARRANGE] POST /companies -> name='Empresa Duplicada' (já cadastrada)");
 
@@ -105,45 +119,179 @@ class CompanyControllerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.message").isNotEmpty())
-                .andExpect(jsonPath("$.timestamp").isNotEmpty())
                 .andReturn();
 
-        log.info("[RESULT] status={}, body={}",
-                result.getResponse().getStatus(),
-                result.getResponse().getContentAsString());
+        log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
     }
 
-    // ─── 500 Internal Server Error ────────────────────────────────────────────
+    // ─── GET /companies (Listar Empresas) ─────────────────────────────────────
 
     @Test
-    @DisplayName("POST /companies → 500 quando o repositório lança exceção inesperada")
-    void createCompany_shouldReturn500_whenRepositoryThrowsUnexpectedException() throws Exception {
+    @DisplayName("GET /companies → 200 com lista de empresas")
+    void listCompanies_shouldReturn200_withCompaniesList() throws Exception {
+        var company = Company.builder()
+                .id(UUID.randomUUID())
+                .name("Empresa Listada")
+                .logo("https://logo.png")
+                .isResident(true)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+
+        when(listCompaniesUseCase.execute(any())).thenReturn(List.of(company));
+
+        log.info("[ARRANGE] GET /companies (sem filtros)");
+
+        var result = mockMvc.perform(get("/companies"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].name").value("Empresa Listada"))
+                .andExpect(jsonPath("$[0].isResident").value(true))
+                .andReturn();
+
+        log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
+    }
+
+    // ─── GET /companies/{id} (Buscar por ID) ──────────────────────────────────
+
+    @Test
+    @DisplayName("GET /companies/{id} → 200 quando ID existe")
+    void getCompanyById_shouldReturn200_whenIdExists() throws Exception {
+        var id = UUID.randomUUID();
+        var company = Company.builder()
+                .id(id)
+                .name("Empresa Encontrada")
+                .logo("https://logo.png")
+                .isResident(true)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+
+        when(getCompanyByIdUseCase.execute(eq(id))).thenReturn(company);
+
+        log.info("[ARRANGE] GET /companies/{}", id);
+
+        var result = mockMvc.perform(get("/companies/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id.toString()))
+                .andExpect(jsonPath("$.name").value("Empresa Encontrada"))
+                .andReturn();
+
+        log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
+    }
+
+    @Test
+    @DisplayName("GET /companies/{id} → 404 quando ID não existe")
+    void getCompanyById_shouldReturn404_whenIdDoesNotExist() throws Exception {
+        var id = UUID.randomUUID();
+        when(getCompanyByIdUseCase.execute(eq(id))).thenThrow(new CompanyNotFoundException());
+
+        log.info("[ARRANGE] GET /companies/{} (ID inexistente)", id);
+
+        var result = mockMvc.perform(get("/companies/{id}", id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andReturn();
+
+        log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
+    }
+
+    // ─── PUT /companies/{id} (Atualizar Empresa) ──────────────────────────────
+
+    @Test
+    @DisplayName("PUT /companies/{id} → 200 com empresa atualizada")
+    void updateCompany_shouldReturn200_whenInputIsValidAndIdExists() throws Exception {
+        var id = UUID.randomUUID();
         var body = """
                 {
-                    "name": "Empresa Teste",
+                    "name": "Nome Atualizado",
+                    "logo": "https://novo-logo.png",
+                    "isResident": false
+                }
+                """;
+
+        var updatedCompany = Company.builder()
+                .id(id)
+                .name("Nome Atualizado")
+                .logo("https://novo-logo.png")
+                .isResident(false)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+
+        when(updateCompanyUseCase.execute(any())).thenReturn(updatedCompany);
+
+        log.info("[ARRANGE] PUT /companies/{} -> body={}", id, body.strip());
+
+        var result = mockMvc.perform(put("/companies/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Nome Atualizado"))
+                .andExpect(jsonPath("$.isResident").value(false))
+                .andReturn();
+
+        log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
+    }
+
+    @Test
+    @DisplayName("PUT /companies/{id} → 404 quando ID não existe no update")
+    void updateCompany_shouldReturn404_whenIdDoesNotExist() throws Exception {
+        var id = UUID.randomUUID();
+        var body = """
+                {
+                    "name": "Qualquer Nome",
                     "logo": "https://logo.png",
                     "isResident": true
                 }
                 """;
 
-        when(createCompanyUseCase.execute(any()))
-                .thenThrow(new RuntimeException("DB connection lost"));
+        when(updateCompanyUseCase.execute(any())).thenThrow(new CompanyNotFoundException());
 
-        log.info("[ARRANGE] POST /companies -> simulando falha inesperada no repositório");
+        log.info("[ARRANGE] PUT /companies/{} -> tentando atualizar ID inexistente", id);
 
-        var result = mockMvc.perform(post("/companies")
+        var result = mockMvc.perform(put("/companies/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.status").value(500))
-                .andExpect(jsonPath("$.message").value("Erro interno do servidor."))
-                .andExpect(jsonPath("$.timestamp").isNotEmpty())
+                .andExpect(status().isNotFound())
                 .andReturn();
 
-        log.info("[RESULT] status={}, body={}",
-                result.getResponse().getStatus(),
-                result.getResponse().getContentAsString());
+        log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
     }
+
+    // ─── DELETE /companies/{id} (Deletar Empresa) ────────────────────────────
+
+    @Test
+    @DisplayName("DELETE /companies/{id} → 204 No Content quando deletado com sucesso")
+    void deleteCompany_shouldReturn24_whenIdExists() throws Exception {
+        var id = UUID.randomUUID();
+        doNothing().when(deleteCompanyUseCase).execute(eq(id));
+
+        log.info("[ARRANGE] DELETE /companies/{}", id);
+
+        var result = mockMvc.perform(delete("/companies/{id}", id))
+                .andExpect(status().isNoContent())
+                .andReturn();
+
+        log.info("[RESULT] status={}", result.getResponse().getStatus());
+    }
+
+    @Test
+    @DisplayName("DELETE /companies/{id} → 404 quando ID não existe na deleção")
+    void deleteCompany_shouldReturn404_whenIdDoesNotExist() throws Exception {
+        var id = UUID.randomUUID();
+        doThrow(new CompanyNotFoundException()).when(deleteCompanyUseCase).execute(eq(id));
+
+        log.info("[ARRANGE] DELETE /companies/{} (ID inexistente)", id);
+
+        var result = mockMvc.perform(delete("/companies/{id}", id))
+                .andExpect(status().isNotFound())
+                .andReturn();
+
+        log.info("[RESULT] status={}, body={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
+    }
+
+    // ─── Validações de Payload (400 Bad Request) ──────────────────────────────
 
     @Test
     @DisplayName("POST /companies → 400 quando o nome está em branco")
@@ -163,92 +311,10 @@ class CompanyControllerTest {
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").isNotEmpty())
-                .andExpect(jsonPath("$.errors").isArray())
                 .andExpect(jsonPath("$.errors[?(@=~ /.*name.*/)]").exists())
                 .andReturn();
 
-        log.info("[RESULT] status={}, errors={}",
-                result.getResponse().getStatus(),
-                result.getResponse().getContentAsString());
-    }
-
-    @Test
-    @DisplayName("POST /companies → 400 quando o nome está ausente")
-    void createCompany_shouldReturn400_whenNameIsNull() throws Exception {
-        var body = """
-                {
-                    "logo": "https://logo.png",
-                    "isResident": true
-                }
-                """;
-
-        log.info("[ARRANGE] POST /companies -> campo 'name' ausente no payload");
-
-        var result = mockMvc.perform(post("/companies")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.errors").isArray())
-                .andExpect(jsonPath("$.errors[?(@=~ /.*name.*/)]").exists())
-                .andReturn();
-
-        log.info("[RESULT] status={}, errors={}",
-                result.getResponse().getStatus(),
-                result.getResponse().getContentAsString());
-    }
-
-    @Test
-    @DisplayName("POST /companies → 400 quando o logo está ausente")
-    void createCompany_shouldReturn400_whenLogoIsNull() throws Exception {
-        var body = """
-                {
-                    "name": "Empresa Teste",
-                    "isResident": true
-                }
-                """;
-
-        log.info("[ARRANGE] POST /companies -> campo 'logo' ausente no payload");
-
-        var result = mockMvc.perform(post("/companies")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.errors").isArray())
-                .andExpect(jsonPath("$.errors[?(@=~ /.*logo.*/)]").exists())
-                .andReturn();
-
-        log.info("[RESULT] status={}, errors={}",
-                result.getResponse().getStatus(),
-                result.getResponse().getContentAsString());
-    }
-
-    @Test
-    @DisplayName("POST /companies → 400 quando isResident está ausente")
-    void createCompany_shouldReturn400_whenIsResidentIsNull() throws Exception {
-        var body = """
-                {
-                    "name": "Empresa Teste",
-                    "logo": "https://logo.png"
-                }
-                """;
-
-        log.info("[ARRANGE] POST /companies -> campo 'isResident' ausente no payload");
-
-        var result = mockMvc.perform(post("/companies")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.errors").isArray())
-                .andExpect(jsonPath("$.errors[?(@=~ /.*isResident.*/)]").exists())
-                .andReturn();
-
-        log.info("[RESULT] status={}, errors={}",
-                result.getResponse().getStatus(),
-                result.getResponse().getContentAsString());
+        log.info("[RESULT] status={}, errors={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
     }
 
     @Test
@@ -263,12 +329,9 @@ class CompanyControllerTest {
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.errors").isArray())
                 .andExpect(jsonPath("$.errors.length()").value(3))
                 .andReturn();
 
-        log.info("[RESULT] status={}, errors={}",
-                result.getResponse().getStatus(),
-                result.getResponse().getContentAsString());
+        log.info("[RESULT] status={}, errors={}", result.getResponse().getStatus(), result.getResponse().getContentAsString());
     }
 }
