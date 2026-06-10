@@ -6,8 +6,6 @@ import com.gc.projeto.modules.companies.domain.Company;
 @Component
 public class CompanyMapper {
 
-    private CompanyMapper() {}
-
     public CompanyEntity toEntity(Company domain) {
         if (domain == null) {
             return null;

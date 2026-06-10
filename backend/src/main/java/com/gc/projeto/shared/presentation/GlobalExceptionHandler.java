@@ -1,6 +1,7 @@
 package com.gc.projeto.shared.presentation;
 
 import com.gc.projeto.modules.companies.domain.exceptions.CompanyNameAlreadyExistsException;
+import com.gc.projeto.modules.companies.domain.exceptions.CompanyNotFoundException;
 import com.gc.projeto.shared.presentation.dtos.ErrorResponseDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(new ErrorResponseDTO(HttpStatus.CONFLICT.value(), ex.getMessage(), Instant.now()));
+    }
+
+    @ExceptionHandler(CompanyNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleCompanyNotFound(CompanyNotFoundException ex) {
+        log.warn("[EXCEPTION] {} -> {}", ex.getClass().getSimpleName(), ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponseDTO(HttpStatus.NOT_FOUND.value(), ex.getMessage(), Instant.now()));
     }
 
     @ExceptionHandler(Exception.class)
