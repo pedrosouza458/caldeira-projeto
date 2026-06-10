@@ -13,13 +13,13 @@ import org.springframework.stereotype.Repository;
 public interface UserJpaRepository extends JpaRepository<UserEntity, UUID> {
 
     @Query("SELECT u FROM UserEntity u WHERE " +
-           "(:username IS NULL OR u.username LIKE CONCAT('%', :username, '%')) AND " +
+           "(:username IS NULL OR u.username LIKE LOWER(CONCAT('%', :username, '%'))) AND " +
            "(:companyId IS NULL OR u.companyId = :companyId) AND " +
-           "(:workZoneId IS NULL OR u.workZoneId = :workZoneId)")
+           "(:featuredProgramId IS NULL OR u.featuredProgramId = :featuredProgramId)")
     Page<UserEntity> findAllByFilters(
             @Param("username") String username,
             @Param("companyId") UUID companyId,
-            @Param("workZoneId") UUID workZoneId,
+            @Param("featuredProgramId") UUID featuredProgramId,
             Pageable pageable);
 
     boolean existsByUsername(String username);
