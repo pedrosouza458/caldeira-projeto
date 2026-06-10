@@ -5,17 +5,25 @@ import java.util.UUID;
 import com.gc.projeto.modules.users.application.dtos.CreateUserInput;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record UserRequestDTO(
+    @NotNull
     @Schema(example = "932e674b-6ca8-413f-9f94-e3e6027383d3")
     UUID id,
 
+    @NotBlank
     @Schema(example = "Fulano da Silva")
     String name,
 
+    @NotBlank
     @Schema(example = "fulano.silva")
     String username,
 
+    @NotBlank
+    @Email
     @Schema(example = "fulanosilva@gmail.com")
     String email,
 

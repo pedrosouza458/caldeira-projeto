@@ -10,11 +10,10 @@ import java.util.UUID;
 @Table(name = "users")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class UserEntity {
-
     /**
      * ID managed externally by Supabase Auth (auth.users).
      * Must be assigned before persisting — no auto-generation.
@@ -53,10 +52,10 @@ public class UserEntity {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at")
     private Instant updatedAt;
 
     @PrePersist
