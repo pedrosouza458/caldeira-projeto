@@ -9,6 +9,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -51,7 +52,7 @@ public class UserController {
 
     @GetMapping()
     public ResponseEntity<Page<UserResponseDTO>> listUsers(
-            UserFilterRequestDTO filters,
+            @ModelAttribute UserFilterRequestDTO filters,
             @PageableDefault(size = 20, sort = "name") Pageable pageable) {
         var usersPage = listUsersUseCase.execute(filters.toInput(), pageable);
         Page<UserResponseDTO> response = usersPage.map(UserResponseDTO::new);
