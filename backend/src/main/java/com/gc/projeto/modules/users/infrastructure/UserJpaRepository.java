@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 public interface UserJpaRepository extends JpaRepository<UserEntity, UUID> {
 
     @Query("SELECT u FROM UserEntity u WHERE " +
+           "(u.deletedAt IS NULL) AND " +
            "(:username IS NULL OR u.username LIKE LOWER(CONCAT('%', :username, '%'))) AND " +
            "(:companyId IS NULL OR u.companyId = :companyId) AND " +
            "(:featuredProgramId IS NULL OR u.featuredProgramId = :featuredProgramId)")
