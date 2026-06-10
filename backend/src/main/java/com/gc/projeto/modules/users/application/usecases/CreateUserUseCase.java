@@ -6,6 +6,7 @@ import com.gc.projeto.modules.users.application.dtos.CreateUserInput;
 import com.gc.projeto.modules.users.domain.User;
 import com.gc.projeto.modules.users.domain.UserRepository;
 import com.gc.projeto.modules.users.domain.exceptions.EmailAlreadyExistsException;
+import com.gc.projeto.modules.users.domain.exceptions.UsernameAlreadyExistsException;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,10 @@ public class CreateUserUseCase {
     public User execute(CreateUserInput input) {
         if (userRepository.existsByEmail(input.email())) {
             throw new EmailAlreadyExistsException();
+        }
+
+        if (userRepository.existsByUsername(input.username())) {
+            throw new UsernameAlreadyExistsException();
         }
         
         var user = User.builder()
