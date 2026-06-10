@@ -30,18 +30,20 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
-public class UserController {
+public class UserController implements UserAPI {
 
     private final CreateUserUseCase createUserUseCase;
     private final GetUserByIdUseCase getUserByIdUseCase;
     private final ListUsersUseCase listUsersUseCase;
 
+    @Override
     @PostMapping()
     public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserRequestDTO request) {
         User user = createUserUseCase.execute(request.toInput());
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponseDTO(user));
     }
 
+    @Override
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, UserResponseDTO>> getUserById(@PathVariable UUID id) {
         User user = getUserByIdUseCase.execute(id);
@@ -49,6 +51,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @Override
     @GetMapping()
     public ResponseEntity<Page<UserResponseDTO>> listUsers(
             @ModelAttribute UserFilterRequestDTO filters,
