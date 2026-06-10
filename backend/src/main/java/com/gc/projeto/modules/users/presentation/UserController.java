@@ -37,10 +37,9 @@ public class UserController {
     private final ListUsersUseCase listUsersUseCase;
 
     @PostMapping()
-    public ResponseEntity<Map<String, String>> createUser(@Valid @RequestBody UserRequestDTO request) {
-        createUserUseCase.execute(request.toInput());
-        Map<String, String> response = Map.of("message", "User created successfully");
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserRequestDTO request) {
+        User user = createUserUseCase.execute(request.toInput());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponseDTO(user));
     }
 
     @GetMapping("/{id}")
@@ -53,7 +52,8 @@ public class UserController {
     @GetMapping()
     public ResponseEntity<Page<UserResponseDTO>> listUsers(
             @ModelAttribute UserFilterRequestDTO filters,
-            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+            @PageableDefault(size = 20, sort = "name") Pageable pageable,
+            Integer page) {
         var usersPage = listUsersUseCase.execute(filters.toInput(), pageable);
         Page<UserResponseDTO> response = usersPage.map(UserResponseDTO::new);
         return ResponseEntity.status(HttpStatus.OK).body(response);
