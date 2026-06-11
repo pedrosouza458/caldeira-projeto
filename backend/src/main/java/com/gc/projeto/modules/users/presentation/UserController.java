@@ -1,6 +1,5 @@
 package com.gc.projeto.modules.users.presentation;
 
-import java.util.Map;
 import java.util.UUID;
 
 import org.springdoc.core.annotations.ParameterObject;
@@ -46,10 +45,9 @@ public class UserController implements UserAPI {
 
     @Override
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, UserResponseDTO>> getUserById(@PathVariable UUID id) {
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable UUID id) {
         User user = getUserByIdUseCase.execute(id);
-        Map<String, UserResponseDTO> response = Map.of("user", new UserResponseDTO(user));
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(new UserResponseDTO(user));
     }
 
     @Override

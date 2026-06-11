@@ -1,6 +1,5 @@
 package com.gc.projeto.modules.users.presentation;
 
-import java.util.Map;
 import java.util.UUID;
 
 import org.springdoc.core.annotations.ParameterObject;
@@ -36,7 +35,7 @@ public interface UserAPI {
             @ApiResponse(responseCode = "200", description = "Usuário encontrado com sucesso"),
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
     })
-    public ResponseEntity<Map<String, UserResponseDTO>> getUserById(
+    public ResponseEntity<UserResponseDTO> getUserById(
             @Parameter(name = "id", description = "ID do usuário", example = "932e674b-6ca8-413f-9f94-e3e6027383d3", required = true) UUID id);
 
     @Operation(summary = "Listar usuários", description = "Retorna uma lista paginada de usuários, permitindo filtros por nome de usuário, empresa e programa em destaque.")
