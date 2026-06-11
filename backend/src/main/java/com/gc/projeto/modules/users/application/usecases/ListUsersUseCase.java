@@ -2,8 +2,6 @@ package com.gc.projeto.modules.users.application.usecases;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.gc.projeto.modules.users.application.dtos.UserFilterInput;
