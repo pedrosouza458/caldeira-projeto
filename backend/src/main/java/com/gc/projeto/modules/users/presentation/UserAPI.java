@@ -3,10 +3,12 @@ package com.gc.projeto.modules.users.presentation;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 import com.gc.projeto.modules.users.presentation.dtos.UserFilterRequestDTO;
 import com.gc.projeto.modules.users.presentation.dtos.UserRequestDTO;
@@ -42,7 +44,6 @@ public interface UserAPI {
             @ApiResponse(responseCode = "200", description = "Lista de usuários retornada com sucesso")
     })
     public ResponseEntity<Page<UserResponseDTO>> listUsers(
-            UserFilterRequestDTO filters,
-            @Parameter(hidden = true) Pageable pageable,
-            @Parameter(name = "page", description = "Número da página (0..N)", example = "0") Integer page);
+            @ParameterObject @ModelAttribute UserFilterRequestDTO filters,
+            @ParameterObject @PageableDefault(size = 20, sort = "name") Pageable pageable);
 }

@@ -19,12 +19,6 @@ public class ListUsersUseCase {
     private final UserRepository userRepository;
 
     public Page<User> execute(UserFilterInput filter, Pageable pageable) {
-        Sort sort = pageable.getSort();
-
-        if (sort.isUnsorted() || sort.stream().anyMatch(o -> o.getProperty().contains("string"))) {
-            sort = Sort.by("name");
-        }
-
-        return userRepository.findAll(filter, PageRequest.of(pageable.getPageNumber(), 20, sort));
+        return userRepository.findAll(filter, pageable);
     }
 }

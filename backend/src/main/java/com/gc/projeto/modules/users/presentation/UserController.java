@@ -3,6 +3,7 @@ package com.gc.projeto.modules.users.presentation;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -54,9 +55,9 @@ public class UserController implements UserAPI {
     @Override
     @GetMapping()
     public ResponseEntity<Page<UserResponseDTO>> listUsers(
-            @ModelAttribute UserFilterRequestDTO filters,
-            @PageableDefault(size = 20, sort = "name") Pageable pageable,
-            Integer page) {
+            @ParameterObject @ModelAttribute UserFilterRequestDTO filters,
+            @PageableDefault(size = 20, sort = "name") Pageable pageable
+        ) {
         var usersPage = listUsersUseCase.execute(filters.toInput(), pageable);
         Page<UserResponseDTO> response = usersPage.map(UserResponseDTO::new);
         return ResponseEntity.status(HttpStatus.OK).body(response);
