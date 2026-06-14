@@ -1,6 +1,6 @@
 package com.gc.projeto.zone;
 
-import com.gc.projeto.company.Company;
+import com.gc.projeto.modules.companies.domain.Company;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
