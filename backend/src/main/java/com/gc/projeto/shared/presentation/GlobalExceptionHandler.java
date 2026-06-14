@@ -1,5 +1,7 @@
 package com.gc.projeto.shared.presentation;
 
+import com.gc.projeto.modules.companies.domain.exceptions.CompanyNameAlreadyExistsException;
+import com.gc.projeto.modules.companies.domain.exceptions.CompanyNotFoundException;
 import com.gc.projeto.shared.domain.exceptions.BusinessException;
 import com.gc.projeto.shared.presentation.dtos.ErrorResponseDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +20,8 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // --- TRATAMENTOS DE VALIDAÇÃO E REQUISIÇÃO (HTTP 400) ---
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleValidation(MethodArgumentNotValidException ex) {
         List<String> errors = ex.getBindingResult().getFieldErrors().stream()
@@ -34,16 +38,6 @@ public class GlobalExceptionHandler {
                         Instant.now(),
                         errors
                 ));
-    }
-
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ErrorResponseDTO> handleBusinessException(BusinessException ex) {
-        log.warn("[BUSINESS EXCEPTION] {} -> {}", ex.getClass().getSimpleName(), ex.getMessage());
-
-        HttpStatus status = ex.getStatus();
-        return ResponseEntity
-                .status(status)
-                .body(new ErrorResponseDTO(status.value(), ex.getMessage(), Instant.now()));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -72,7 +66,52 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-     @ExceptionHandler(Exception.class)
+    // --- TRATAMENTOS DE NEGÓCIO E DOMÍNIO ---
+
+    @ExceptionHandler(CompanyNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleNotFoundException(CompanyNotFoundException ex) {
+        log.warn("[NOT FOUND EXCEPTION] {} -> {}", ex.getClass().getSimpleName(), ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.NOT_FOUND.value(),
+                        ex.getMessage(),
+                        Instant.now()
+                ));
+    }
+
+    @ExceptionHandler(CompanyNameAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponseDTO> handleConflictException(CompanyNameAlreadyExistsException ex) {
+        log.warn("[CONFLICT EXCEPTION] {} -> {}", ex.getClass().getSimpleName(), ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.CONFLICT.value(),
+                        ex.getMessage(),
+                        Instant.now()
+                ));
+    }
+
+    /* Fallback para qualquer outra BusinessException que não tenha um handler específico.
+       Normalmente mapeado para 400 (Bad Request) ou 422 (Unprocessable Entity). */
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponseDTO> handleBusinessException(BusinessException ex) {
+        log.warn("[BUSINESS EXCEPTION] {} -> {}", ex.getClass().getSimpleName(), ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponseDTO(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage(),
+                        Instant.now()
+                ));
+    }
+
+    // --- TRATAMENTO GENÉRICO DE FALHAS INESPERADAS (HTTP 500) ---
+
+    @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGenericException(Exception ex) {
         log.error("[EXCEPTION] Erro inesperado -> {}", ex.getMessage(), ex);
 
