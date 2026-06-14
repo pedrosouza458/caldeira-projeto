@@ -1,6 +1,5 @@
-package com.gc.projeto.user;
+package com.gc.projeto.modules.users.infrastructure;
 
-import com.gc.projeto.company.Company;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,11 +10,10 @@ import java.util.UUID;
 @Table(name = "users")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class User {
-
+public class UserEntity {
     /**
      * ID managed externally by Supabase Auth (auth.users).
      * Must be assigned before persisting — no auto-generation.
@@ -27,26 +25,37 @@ public class User {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "profile_picture")
-    private String profilePicture;
+    @Column(name = "username", nullable = false, unique = true)
+    private String username;
 
-    @Column(name = "is_alumni", nullable = false)
-    private boolean isAlumni;
+    @Column(name = "email", nullable = false, unique = true)
+    private String email;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id")
-    private Company company;
+    @Column(name = "profile_picture_url")
+    private String profilePictureUrl;
 
-    @Column(name = "last_urgent_request_at", nullable = false)
-    private Instant lastUrgentRequestAt;
+    @Column(name = "company_id")
+    private UUID companyId;
+
+    @Column(name = "last_urgent_need")
+    private Instant lastUrgentNeed;
+
+    @Column(name = "work_zone_id")
+    private UUID workZoneId;
+
+    @Column(name = "actual_zone_id")
+    private UUID actualZoneId;
+
+    @Column(name = "featured_program_id")
+    private UUID featuredProgramId;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at")
     private Instant updatedAt;
 
     @PrePersist
