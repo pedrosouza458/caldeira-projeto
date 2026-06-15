@@ -66,7 +66,7 @@ public interface CompanyAPI {
 
     @Operation(
             summary = "Listar empresas",
-            description = "Retorna as empresas cadastradas de forma paginada. Aceita filtro opcional pelo status de residente."
+            description = "Retorna as empresas cadastradas de forma paginada. Aceita filtros opcionais pelo nome (parcial) e status de residente."
     )
     @ApiResponses({
             @ApiResponse(
@@ -76,8 +76,12 @@ public interface CompanyAPI {
     })
     @GetMapping
     ResponseEntity<Page<CompanyResponseDTO>> listCompanies(
-            @Parameter(description = "Filtra por empresas residentes (true) ou não residentes (false). Omitir para listar todas.")
+            @Parameter(description = "Filtra por empresas residentes (true) ou não residentes (false). Omitir para listar todas.", example = "true")
             @RequestParam(required = false) Boolean isResident,
+
+            @Parameter(description = "Filtra de forma parcial pelo nome da empresa (ignorando maiúsculas e minúsculas).", example = "Exemplo")
+            @RequestParam(required = false) String name,
+
             @Parameter(description = "Parâmetros de paginação (page, size, sort)")
             Pageable pageable
     );

@@ -1,5 +1,6 @@
 package com.gc.projeto.modules.companies.application.usecases;
 
+import com.gc.projeto.modules.companies.application.dtos.CompanyFilterInput;
 import com.gc.projeto.modules.companies.domain.Company;
 import com.gc.projeto.modules.companies.domain.CompanyRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,10 +16,7 @@ public class ListCompaniesUseCase {
 
     private final CompanyRepository companyRepository;
 
-    public Page<Company> execute(Boolean isResident, Pageable pageable) {
-        if (isResident != null) {
-            return companyRepository.findByIsResident(isResident, pageable);
-        }
-        return companyRepository.findAll(pageable);
+    public Page<Company> execute(CompanyFilterInput filter, Pageable pageable) {
+        return companyRepository.findAll(filter, pageable);
     }
 }

@@ -1,5 +1,6 @@
 package com.gc.projeto.modules.companies.presentation;
 
+import com.gc.projeto.modules.companies.application.dtos.CompanyFilterInput;
 import com.gc.projeto.modules.companies.application.usecases.*;
 import com.gc.projeto.modules.companies.presentation.dtos.CompanyRequestDTO;
 import com.gc.projeto.modules.companies.presentation.dtos.CompanyResponseDTO;
@@ -33,8 +34,9 @@ public class CompanyController implements CompanyAPI {
     }
 
     @Override
-    public ResponseEntity<Page<CompanyResponseDTO>> listCompanies(Boolean isResident, Pageable pageable) {
-        var companies = listCompaniesUseCase.execute(isResident, pageable);
+    public ResponseEntity<Page<CompanyResponseDTO>> listCompanies(Boolean isResident, String name, Pageable pageable) {
+        var filter = new CompanyFilterInput(name, isResident);
+        var companies = listCompaniesUseCase.execute(filter, pageable);
         Page<CompanyResponseDTO> responsePage = companies.map(CompanyResponseDTO::new);
         return ResponseEntity.ok(responsePage);
     }
