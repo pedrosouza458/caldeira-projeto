@@ -1,5 +1,6 @@
 package com.gc.projeto.modules.companies.infrastructure;
 
+import com.gc.projeto.modules.companies.infrastructure.specifications.CompanySpecifications;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
@@ -54,12 +56,7 @@ class CompanyJpaRepositoryTest {
     @Test
     @DisplayName("Deve encontrar empresa pelo nome ignorando case (maiúsculas/minúsculas)")
     void findByNameIgnoreCase_shouldReturnCompany_whenNameMatchesIgnoringCase() {
-        log.info("[ARRANGE] buscando por -> 'rESIDENT teCH'");
-
         Optional<CompanyEntity> found = repository.findByNameIgnoreCase("rESIDENT teCH");
-
-        log.info("[RESULT] empresa encontrada -> presente={}", found.isPresent());
-
         assertThat(found).isPresent();
         assertThat(found.get().getId()).isEqualTo(residentCompany.getId());
     }
@@ -67,49 +64,52 @@ class CompanyJpaRepositoryTest {
     @Test
     @DisplayName("Deve retornar vazio ao buscar por um nome inexistente")
     void findByNameIgnoreCase_shouldReturnEmpty_whenNameDoesNotExist() {
-        log.info("[ARRANGE] buscando por -> 'Unknown'");
-
         Optional<CompanyEntity> found = repository.findByNameIgnoreCase("Unknown");
-
-        log.info("[RESULT] empresa encontrada -> presente={}", found.isPresent());
-
         assertThat(found).isEmpty();
     }
 
     @Test
     @DisplayName("Deve verificar se a empresa existe pelo nome ignorando case")
     void existsByNameIgnoreCase_shouldReturnTrue_whenNameMatchesIgnoringCase() {
-        log.info("[ARRANGE] verificando existência de -> 'RESIDENT TECH', 'external corp' e 'Ghost'");
-
-        boolean existsResident = repository.existsByNameIgnoreCase("RESIDENT TECH");
-        boolean existsExternal = repository.existsByNameIgnoreCase("external corp");
-        boolean notExists = repository.existsByNameIgnoreCase("Ghost");
-
-        log.info("[RESULT] existsResident={}, existsExternal={}, notExists={}", existsResident, existsExternal, notExists);
-
-        assertThat(existsResident).isTrue();
-        assertThat(existsExternal).isTrue();
-        assertThat(notExists).isFalse();
+        assertThat(repository.existsByNameIgnoreCase("RESIDENT TECH")).isTrue();
+        assertThat(repository.existsByNameIgnoreCase("Ghost")).isFalse();
     }
 
-    // ─── paginação e filtros ──────────────────────────────────────────────────
+    // ─── paginação e specifications (Testes Adicionados) ──────────────────────
 
     @Test
-    @DisplayName("Deve buscar empresas filtrando por status de residente com paginação")
-    void findByIsResident_shouldReturnPaginatedCompanies_whenFilteringByStatus() {
+    @DisplayName("Deve buscar empresas utilizando Specification para nome parcial (ignorando case)")
+    void findAll_shouldReturnPaginatedCompanies_whenFilteringByNameSpec() {
         PageRequest pageRequest = PageRequest.of(0, 10);
-        log.info("[ARRANGE] buscando empresas residentes=true e residentes=false, página 0, tamanho 10");
+        Specification<CompanyEntity> spec = Specification.where(CompanySpecifications.nameContainsIgnoreCase("tech"));
 
-        Page<CompanyEntity> residentPage = repository.findByIsResident(true, pageRequest);
-        Page<CompanyEntity> nonResidentPage = repository.findByIsResident(false, pageRequest);
+        Page<CompanyEntity> resultPage = repository.findAll(spec, pageRequest);
 
-        log.info("[RESULT] residentes encontrados={}, não-residentes encontrados={}", 
-                 residentPage.getTotalElements(), nonResidentPage.getTotalElements());
+        assertThat(resultPage.getContent()).hasSize(1);
+        assertThat(resultPage.getContent().get(0).getName()).isEqualTo("Resident Tech");
+    }
 
-        assertThat(residentPage.getContent()).hasSize(1);
-        assertThat(residentPage.getContent().get(0).getId()).isEqualTo(residentCompany.getId());
+    @Test
+    @DisplayName("Deve buscar empresas utilizando Specification para isResident")
+    void findAll_shouldReturnPaginatedCompanies_whenFilteringByIsResidentSpec() {
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        Specification<CompanyEntity> spec = Specification.where(CompanySpecifications.isResidentEquals(false));
 
-        assertThat(nonResidentPage.getContent()).hasSize(1);
-        assertThat(nonResidentPage.getContent().get(0).getId()).isEqualTo(nonResidentCompany.getId());
+        Page<CompanyEntity> resultPage = repository.findAll(spec, pageRequest);
+
+        assertThat(resultPage.getContent()).hasSize(1);
+        assertThat(resultPage.getContent().get(0).getName()).isEqualTo("External Corp");
+    }
+
+    @Test
+    @DisplayName("Deve retornar todas as empresas quando as Specifications forem geradas a partir de parâmetros nulos")
+    void findAll_shouldReturnAllCompanies_whenSpecsAreNull() {
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        Specification<CompanyEntity> spec = Specification.where(CompanySpecifications.nameContainsIgnoreCase(null))
+                .and(CompanySpecifications.isResidentEquals(null));
+
+        Page<CompanyEntity> resultPage = repository.findAll(spec, pageRequest);
+
+        assertThat(resultPage.getTotalElements()).isEqualTo(2);
     }
 }

@@ -128,7 +128,7 @@ class CompanyControllerTest {
     // ─── GET /companies (Listar Empresas Paginadas) ───────────────────────────
 
     @Test
-    @DisplayName("GET /companies → 200 com lista paginada de empresas")
+    @DisplayName("GET /companies → 200 com lista paginada de empresas (Sem Filtros)")
     void listCompanies_shouldReturn200_withCompaniesList() throws Exception {
         var company = Company.builder()
                 .id(UUID.randomUUID())
@@ -139,14 +139,14 @@ class CompanyControllerTest {
                 .updatedAt(Instant.now())
                 .build();
 
-        // Ajustado para o novo contrato de paginação (Ponto 13)
-        when(listCompaniesUseCase.execute(any(), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(company)));
+        when(listCompaniesUseCase.execute(any(com.gc.projeto.modules.companies.application.dtos.CompanyFilterInput.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(company)));
 
         log.info("[ARRANGE] GET /companies (sem filtros)");
 
         var result = mockMvc.perform(get("/companies"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray()) // Resposta envelopada pelo Page do Spring
+                .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].name").value("Empresa Listada"))
                 .andExpect(jsonPath("$.content[0].isResident").value(true))
                 .andReturn();
@@ -155,7 +155,7 @@ class CompanyControllerTest {
     }
 
     @Test
-    @DisplayName("GET /companies?isResident=true → 200 filtrando por empresas residentes (Adicionado)")
+    @DisplayName("GET /companies?isResident=true&name=Residente → 200 filtrando por empresas residentes e nome")
     void listCompanies_shouldReturn200_withFilteredCompaniesList() throws Exception {
         var company = Company.builder()
                 .id(UUID.randomUUID())
@@ -166,11 +166,14 @@ class CompanyControllerTest {
                 .updatedAt(Instant.now())
                 .build();
 
-        when(listCompaniesUseCase.execute(eq(true), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(company)));
+        when(listCompaniesUseCase.execute(any(com.gc.projeto.modules.companies.application.dtos.CompanyFilterInput.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(company)));
 
-        log.info("[ARRANGE] GET /companies?isResident=true");
+        log.info("[ARRANGE] GET /companies?isResident=true&name=Residente");
 
-        var result = mockMvc.perform(get("/companies").param("isResident", "true"))
+        var result = mockMvc.perform(get("/companies")
+                        .param("isResident", "true")
+                        .param("name", "Residente"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("Empresa Residente"))
                 .andExpect(jsonPath("$.content[0].isResident").value(true))
@@ -364,7 +367,6 @@ class CompanyControllerTest {
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                // Corrigido: Asserção rígida baseada no formato mapeado pelo GlobalExceptionHandler (Ponto 7)
                 .andExpect(jsonPath("$.errors", hasItem("name: O nome da empresa é obrigatório.")))
                 .andReturn();
 

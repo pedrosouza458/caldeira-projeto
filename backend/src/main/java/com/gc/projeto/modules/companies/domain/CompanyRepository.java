@@ -1,5 +1,6 @@
 package com.gc.projeto.modules.companies.domain;
 
+import com.gc.projeto.modules.companies.application.dtos.CompanyFilterInput;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,8 +14,7 @@ public interface CompanyRepository {
     Optional<Company> findById(UUID id);
     Optional<Company> findByName(String name);
     List<Company> findAll();
-    Page<Company> findAll(Pageable pageable);
-    Page<Company> findByIsResident(boolean isResident, Pageable pageable);
+    Page<Company> findAll(CompanyFilterInput filter, Pageable pageable);
     boolean existsById(UUID id);
     boolean existsByName(String name);
 }

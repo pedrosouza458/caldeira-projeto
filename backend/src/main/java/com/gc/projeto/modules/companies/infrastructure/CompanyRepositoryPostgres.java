@@ -5,8 +5,11 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.gc.projeto.modules.companies.application.dtos.CompanyFilterInput;
+import com.gc.projeto.modules.companies.infrastructure.specifications.CompanySpecifications;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import com.gc.projeto.modules.companies.domain.Company;
@@ -53,14 +56,11 @@ public class CompanyRepositoryPostgres implements CompanyRepository {
     }
 
     @Override
-    public Page<Company> findAll(Pageable pageable) {
-        return jpaRepository.findAll(pageable)
-                .map(mapper::toDomain);
-    }
+    public Page<Company> findAll(CompanyFilterInput filter, Pageable pageable) {
+        Specification<CompanyEntity> spec = Specification.where(CompanySpecifications.nameContainsIgnoreCase(filter.name()))
+                .and(CompanySpecifications.isResidentEquals(filter.isResident()));
 
-    @Override
-    public Page<Company> findByIsResident(boolean isResident, Pageable pageable) {
-        return jpaRepository.findByIsResident(isResident, pageable)
+        return jpaRepository.findAll(spec, pageable)
                 .map(mapper::toDomain);
     }
 
